@@ -376,6 +376,22 @@
             slider.addEventListener('touchstart', () => isDragging = true);
             slider.addEventListener('touchend', () => isDragging = false);
 
+
+            function getUrlParamOrDefault(paramName, defaultValue) {
+              // Get the current URL's query string
+              const queryString = window.location.search;
+
+              // Create a URLSearchParams object to easily parse the query string
+              const urlParams = new URLSearchParams(queryString);
+
+              // Check if the parameter exists in the URL
+              if (urlParams.has(paramName)) {
+                return urlParams.get(paramName); // Return the value of the parameter
+              } else {
+                return defaultValue; // Return the default value
+              }
+            }
+            
             // --- Demo Functionality ---
             async function loadDemo() {
                 loadDemoBtn.textContent = 'Loading...';
@@ -440,11 +456,11 @@
 
                 try {
                     // MODIFIED: Use local paths for demo files
-                    const demoAudioURL = 'demo-audio.mp3';
+                    const demoAudioURL = getUrlParamOrDefault('audio','demo-audio.mp3');
                     const demoBgUrl = 'demo-background.jpg';
 
                     audio.src = demoAudioURL;
-                    audioFileNameEl.textContent = 'demo-audio.mp3';
+                    audioFileNameEl.textContent = demoAudioURL;
                     isReady.audio = true;
                     
                     lrcData = parseEnhancedLRC(demoLrcContent);
