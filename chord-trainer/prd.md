@@ -30,6 +30,9 @@ Date: June 12, 2025
 
 Version: 1.0
 
+App page: https://eitan101.github.io/chord-trainer/
+
+Read more: https://eitan101.github.io/chord-trainer/iprd.html
 
 ## **1. Introduction**
 
