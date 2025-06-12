@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive PRD: Configurable Ear Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: Calm Neutral -->
+    <!-- Application Structure Plan: A single-page application with a fixed left-hand navigation sidebar and a main scrollable content area. This structure provides persistent, easy access to all sections of the PRD, promoting non-linear exploration. Key sections are 'Overview', 'Target Audience', 'Core Features' (with interactive tabs for each feature set), 'Requirements', and 'Roadmap'. This is more usable than a long, linear document as users can jump directly to the information they need. -->
+    <!-- Visualization & Content Choices: Goals -> Inform -> Styled list with icons for quick scanning. Target Audience -> Inform -> Card layout for clear separation of personas. Core Features -> Organize/Explore -> Interactive JS tabs to break down the dense feature list into manageable chunks; user stories are presented as cards instead of a static table for better readability. NFRs -> Inform -> Checklist format for clarity. Roadmap -> Inform -> Simple horizontal timeline layout. All interactions are handled with vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-weight: 600;
+            transform: translateX(4px);
+        }
+        .feature-tab {
+            transition: all 0.2s ease-in-out;
+        }
+        .feature-tab.active {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+        .content-section {
+            padding-top: 4rem;
+            margin-top: -4rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="relative min-h-screen md:flex">
+        <!-- Sidebar Navigation -->
+        <aside class="bg-[#e8e6e1] text-gray-700 w-full md:w-64 md:space-y-2 md:py-7 md:px-2 md:fixed md:inset-y-0 md:left-0 md:flex md:flex-col">
+            <a href="#" class="text-gray-900 text-xl font-bold px-4 flex items-center">
+                <span class="text-2xl text-indigo-600 mr-2">🎵</span>
+                Ear Trainer PRD
+            </a>
+            <nav id="nav-menu" class="flex-grow mt-4 md:mt-0">
+                <a href="#overview" class="nav-link block p-2.5 my-1 rounded-md hover:bg-indigo-100">Overview</a>
+                <a href="#audience" class="nav-link block p-2.5 my-1 rounded-md hover:bg-indigo-100">Target Audience</a>
+                <a href="#features" class="nav-link block p-2.5 my-1 rounded-md hover:bg-indigo-100">Core Features</a>
+                <a href="#requirements" class="nav-link block p-2.5 my-1 rounded-md hover:bg-indigo-100">Requirements</a>
+                <a href="#roadmap" class="nav-link block p-2.5 my-1 rounded-md hover:bg-indigo-100">Roadmap</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="md:ml-64 flex-1 p-6 md:p-10">
+            <!-- Section 1: Overview -->
+            <section id="overview" class="content-section">
+                <h1 class="text-4xl font-bold text-gray-800">Product Requirements: Configurable Ear Trainer</h1>
+                <p class="mt-4 text-lg text-gray-600">This document outlines the scope, features, and requirements for a web-based application designed to provide a "hands-free," highly customizable aural training experience for musicians.</p>
+                
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-800">Problem Statement</h2>
+                        <p class="mt-2 text-gray-700">Musicians and music students need a flexible and effective way to practice aural skills, specifically chord recognition within a musical key. Existing tools are often too rigid, lack customization, or require constant manual interaction, which disrupts the learning flow and makes "hands-free" practice nearly impossible.</p>
+                    </div>
+                     <div>
+                        <h2 class="text-2xl font-semibold text-gray-800">Proposed Solution</h2>
+                        <p class="mt-2 text-gray-700">The Configurable Ear Trainer allows users to create personalized quizzes by selecting a key, scale, and specific chord variations. The application plays a chord, pauses for a user-defined duration, and then announces the answer, creating a continuous and focused training loop.</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-center text-gray-800">Project Goals</h3>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+                        <div class="p-4">
+                            <span class="text-4xl">👂</span>
+                            <h4 class="mt-2 font-semibold">Improve Aural Skills</h4>
+                            <p class="text-sm text-gray-600 mt-1">Provide an effective tool to recognize diatonic chords and qualities by ear.</p>
+                        </div>
+                        <div class="p-4">
+                            <span class="text-4xl">🎯</span>
+                            <h4 class="mt-2 font-semibold">Enable Focused Practice</h4>
+                            <p class="text-sm text-gray-600 mt-1">Allow users to isolate specific chords, scales, and variations.</p>
+                        </div>
+                        <div class="p-4">
+                            <span class="text-4xl">🙌</span>
+                            <h4 class="mt-2 font-semibold">Provide Hands-Free Experience</h4>
+                            <p class="text-sm text-gray-600 mt-1">Enable continuous learning without touching the device.</p>
+                        </div>
+                        <div class="p-4">
+                            <span class="text-4xl">✨</span>
+                            <h4 class="mt-2 font-semibold">Enhance Usability</h4>
+                            <p class="text-sm text-gray-600 mt-1">Create a simple, intuitive interface that remembers user preferences.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Target Audience -->
+            <section id="audience" class="content-section">
+                 <h2 class="text-3xl font-bold text-gray-800">Target Audience</h2>
+                 <p class="mt-2 text-gray-600">The application is designed for a range of users dedicated to improving their musical understanding.</p>
+                 <div class="mt-8 grid md:grid-cols-3 gap-6">
+                     <div class="bg-white rounded-lg shadow p-6">
+                         <h3 class="font-bold text-lg text-indigo-700">🎓 Music Students</h3>
+                         <p class="mt-2 text-sm text-gray-600">University or private lesson students who need to pass aural skills exams and build a foundational understanding of music theory.</p>
+                     </div>
+                     <div class="bg-white rounded-lg shadow p-6">
+                         <h3 class="font-bold text-lg text-indigo-700">🎸 Hobbyists & Self-Taught Musicians</h3>
+                         <p class="mt-2 text-sm text-gray-600">Instrumentalists who want to improve their ability to play by ear, learn songs faster, and understand chord progressions.</p>
+                     </div>
+                     <div class="bg-white rounded-lg shadow p-6">
+                         <h3 class="font-bold text-lg text-indigo-700">🎹 Songwriters & Producers</h3>
+                         <p class="mt-2 text-sm text-gray-600">Creative musicians who want to internalize the sound of different chord qualities to improve their compositional toolkit.</p>
+                     </div>
+                 </div>
+            </section>
+
+            <!-- Section 3: Core Features -->
+            <section id="features" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800">Core Features & User Stories</h2>
+                <p class="mt-2 text-gray-600">The application's functionality is defined by the following user stories, grouped by feature.</p>
+                <div id="feature-tabs" class="mt-6 flex flex-wrap gap-2 border-b border-gray-200">
+                    <button data-tab="tab-loop" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Training Loop</button>
+                    <button data-tab="tab-config" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Key/Scale Config</button>
+                    <button data-tab="tab-selection" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Chord Selection</button>
+                    <button data-tab="tab-variation" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Chord Variations</button>
+                    <button data-tab="tab-session" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Session Customization</button>
+                    <button data-tab="tab-persistence" class="feature-tab px-4 py-2 font-medium border-b-2 border-transparent">Settings Persistence</button>
+                </div>
+
+                <div id="feature-content" class="mt-6">
+                    <!-- Tab Content: Training Loop -->
+                    <div id="tab-loop" class="feature-content-panel space-y-4">
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">start a training session that plays a random chord from my selected pool...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> practice identifying chords by ear.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">hear the name of the chord announced after a delay...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> check my answer without looking at the screen.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">have the quiz loop continuously...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> practice for an extended period without interruption.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Key/Scale Config -->
+                    <div id="tab-config" class="feature-content-panel hidden space-y-4">
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                             <p class="text-sm text-gray-500">As a user, I want to...</p>
+                             <p class="font-semibold text-gray-800 mt-1">select any of the 12 chromatic notes as the key...</p>
+                             <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> practice in any tonal center.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                             <p class="text-sm text-gray-500">As a user, I want to...</p>
+                             <p class="font-semibold text-gray-800 mt-1">choose from a list of common scales (Major, Natural/Harmonic/Melodic Minor)...</p>
+                             <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> train my ear for the specific sound of different modes.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content: Chord Selection -->
+                    <div id="tab-selection" class="feature-content-panel hidden space-y-4">
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                             <p class="text-sm text-gray-500">As a user, I want to...</p>
+                             <p class="font-semibold text-gray-800 mt-1">see a list of the 7 diatonic chords for my chosen key/scale...</p>
+                             <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> understand the basic harmonic structure.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                             <p class="text-sm text-gray-500">As a user, I want to...</p>
+                             <p class="font-semibold text-gray-800 mt-1">select which of the 7 diatonic chords to include in the quiz...</p>
+                             <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> focus my practice on specific scale degrees (e.g., just V and I).</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Chord Variation -->
+                    <div id="tab-variation" class="feature-content-panel hidden space-y-4">
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                             <p class="text-sm text-gray-500">As a user, I want to...</p>
+                             <p class="font-semibold text-gray-800 mt-1">choose different "versions" for each diatonic chord (e.g., Major, minor, aug, dim, sus2/4, 7ths)...</p>
+                             <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> learn to distinguish between different chord qualities built on the same root.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">enable different inversions (root, 1st, 2nd) for each selected chord...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> learn to recognize chords when the bass note is not the root.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content: Session Customization -->
+                    <div id="tab-session" class="feature-content-panel hidden space-y-4">
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">set the delay time (in seconds) between the chord playing and the answer being announced...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> give myself enough time to think, or challenge myself with a shorter delay.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">hear a key calibration sequence (arpeggio and tonic chord) at the start of a session...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> firmly establish the tonal center in my ear before the quiz begins.</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">hear a verbal cue ("Start training") after the calibration...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> know exactly when the quiz is about to start.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content: Settings Persistence -->
+                    <div id="tab-persistence" class="feature-content-panel hidden space-y-4">
+                       <div class="bg-white rounded-lg p-5 shadow-sm border-l-4 border-indigo-500">
+                            <p class="text-sm text-gray-500">As a user, I want to...</p>
+                            <p class="font-semibold text-gray-800 mt-1">have all my configuration settings (key, scale, chords, delay) automatically saved in my browser...</p>
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-medium">So that I can</span> quickly resume my preferred training session without setting it up again each time.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Section 4: Non-Functional Requirements -->
+            <section id="requirements" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800">Non-Functional Requirements</h2>
+                <p class="mt-2 text-gray-600">Quality attributes and constraints that the system must satisfy.</p>
+                <div class="mt-8 space-y-4">
+                    <div class="flex items-start bg-white p-4 rounded-lg shadow-sm">
+                        <span class="text-green-500 text-2xl mr-4">✓</span>
+                        <div>
+                            <h3 class="font-semibold">Usability</h3>
+                            <p class="text-gray-600">The interface must be clean, intuitive, and easy to navigate on both desktop and mobile devices. All configuration options should be clearly labeled.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start bg-white p-4 rounded-lg shadow-sm">
+                        <span class="text-green-500 text-2xl mr-4">✓</span>
+                        <div>
+                            <h3 class="font-semibold">Performance</h3>
+                            <p class="text-gray-600">The application must be responsive. Audio playback should be instantaneous upon user action. The UI should update smoothly without lag.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start bg-white p-4 rounded-lg shadow-sm">
+                        <span class="text-green-500 text-2xl mr-4">✓</span>
+                        <div>
+                            <h3 class="font-semibold">Accessibility</h3>
+                            <p class="text-gray-600">The application should use clear color contrast for text and controls. Spoken answers provide an essential layer of accessibility.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start bg-white p-4 rounded-lg shadow-sm">
+                        <span class="text-green-500 text-2xl mr-4">✓</span>
+                        <div>
+                            <h3 class="font-semibold">Browser Compatibility</h3>
+                            <p class="text-gray-600">The application must function correctly on the latest versions of major web browsers (Chrome, Firefox, Safari, Edge).</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Section 5: Roadmap -->
+            <section id="roadmap" class="content-section">
+                <h2 class="text-3xl font-bold text-gray-800">Roadmap: Potential Future Enhancements</h2>
+                <p class="mt-2 text-gray-600">Ideas for expanding the application in future versions.</p>
+                <div class="mt-8 grid md:grid-cols-3 gap-6">
+                     <div class="bg-white rounded-lg shadow p-6 border-t-4 border-indigo-300">
+                         <h3 class="font-bold text-lg text-indigo-700">📚 Expanded Content</h3>
+                         <ul class="mt-2 list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li>More scales (Dorian, Mixolydian, etc.)</li>
+                            <li>More chord variations (9ths, 13ths)</li>
+                            <li>Advanced chord voicings</li>
+                         </ul>
+                     </div>
+                     <div class="bg-white rounded-lg shadow p-6 border-t-4 border-indigo-300">
+                         <h3 class="font-bold text-lg text-indigo-700">🏆 Gamification & Progress Tracking</h3>
+                         <ul class="mt-2 list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li>Interactive quiz mode with scoring</li>
+                            <li>Visual progress charts</li>
+                            <li>Level-based progression</li>
+                         </ul>
+                     </div>
+                     <div class="bg-white rounded-lg shadow p-6 border-t-4 border-indigo-300">
+                         <h3 class="font-bold text-lg text-indigo-700">🎹 Instrument Sound Selection</h3>
+                          <ul class="mt-2 list-disc list-inside text-sm text-gray-600 space-y-1">
+                            <li>Change synth to realistic piano</li>
+                            <li>Add guitar sound option</li>
+                         </ul>
+                     </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Feature Tabs Interaction ---
+        const tabs = document.querySelectorAll('.feature-tab');
+        const contentPanels = document.querySelectorAll('.feature-content-panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Deactivate all tabs and hide all panels
+                tabs.forEach(t => t.classList.remove('active'));
+                contentPanels.forEach(p => p.classList.add('hidden'));
+
+                // Activate the clicked tab and show its panel
+                tab.classList.add('active');
+                const targetPanel = document.getElementById(tab.dataset.tab);
+                if (targetPanel) {
+                    targetPanel.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Set the first tab as active by default
+        if (tabs.length > 0) {
+            tabs[0].click();
+        }
+
+
+        // --- Active Nav Link on Scroll ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.content-section');
+        
+        const observerOptions = {
+            root: null, 
+            rootMargin: '0px',
+            threshold: 0.3 
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+        // --- Sidebar Nav Click Scrolling ---
+        const sidebarNav = document.getElementById('nav-menu');
+        sidebarNav.addEventListener('click', (e) => {
+            if(e.target.tagName === 'A') {
+                e.preventDefault();
+                const targetId = e.target.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if(targetSection) {
+                   targetSection.scrollIntoView({ behavior: 'smooth', block: 'start'});
+                   // On smaller screens, manually update history for back button functionality
+                   if (window.innerWidth < 768) {
+                       history.pushState(null, null, targetId);
+                   }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
