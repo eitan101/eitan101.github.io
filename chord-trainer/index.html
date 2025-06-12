@@ -362,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         configView.classList.add('hidden');
         quizView.classList.remove('hidden');
         
+        // --- CALIBRATION STEP ---
         const keyName = keySelect.options[keySelect.selectedIndex].text;
         const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text;
         chordDisplay.textContent = `Calibrating: ${keyName} ${scaleName}`;
@@ -387,7 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         synth.triggerAttackRelease(tonicChord, "1n", now + tonicArpeggio.length * 0.3);
         
-        await sleep((tonicArpeggio.length * 300) + 1000);
+        const calibrationTime = (tonicArpeggio.length * 300) + 1000;
+        await sleep(calibrationTime);
+        
+        // --- NEW: Announce start and pause ---
+        if (!quizActive) return;
+        chordDisplay.textContent = "Get Ready...";
+        speak("Start training");
+        await sleep(1500); // Wait for speech and add a pause
+        // --- END NEW ---
+
         if (!quizActive) return;
         runQuizCycle();
     };
