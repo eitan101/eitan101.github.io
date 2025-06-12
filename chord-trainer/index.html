@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurable Ear Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="max-w-3xl w-full mx-auto">
+
+        <!-- Config View -->
+        <div id="config-view" class="space-y-6">
+            <h1 class="text-3xl font-bold text-center text-gray-800 dark:text-white mb-2">Ear Trainer Setup</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                    <label for="key-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Key</label>
+                    <select id="key-select" class="mt-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"></select>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                    <label for="scale-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Scale</label>
+                    <select id="scale-select" class="mt-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"></select>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <label for="time-slider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Delay Before Answer: <span id="time-display" class="font-bold">3</span> seconds
+                </label>
+                <input id="time-slider" type="range" min="1" max="10" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2">
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-bold mb-3 text-gray-800 dark:text-white">Diatonic Chords to Include</h3>
+                <div id="diatonic-chords-container" class="space-y-4">
+                    <!-- Dynamic content goes here -->
+                </div>
+            </div>
+            
+            <button id="start-training" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-4 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none">Start Training</button>
+        </div>
+
+        <!-- Quiz View -->
+        <div id="quiz-view" class="hidden text-center">
+            <h2 id="quiz-title" class="text-2xl font-bold mb-8">Training in Progress...</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 min-h-[200px] flex items-center justify-center">
+                <p id="chord-display" class="text-4xl font-bold text-indigo-500 dark:text-indigo-400">Starting...</p>
+            </div>
+            <button id="stop-quiz" class="mt-8 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors">Stop</button>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
+    const configView = document.getElementById('config-view');
+    const quizView = document.getElementById('quiz-view');
+    const keySelect = document.getElementById('key-select');
+    const scaleSelect = document.getElementById('scale-select');
+    const timeSlider = document.getElementById('time-slider');
+    const timeDisplay = document.getElementById('time-display');
+    const chordsContainer = document.getElementById('diatonic-chords-container');
+    const startButton = document.getElementById('start-training');
+    const stopButton = document.getElementById('stop-quiz');
+    const chordDisplay = document.getElementById('chord-display');
+
+    // --- State ---
+    let synth;
+    let quizActive = false;
+    let quizPool = [];
+    let answerDelay = 3000;
+    const SETTINGS_KEY = 'earTrainerSettings';
+
+    // --- Music Theory Engine ---
+    const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+    const ORDINAL_NAMES = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh'];
+    const SCALES = {
+        'Major': { intervals: [0, 2, 4, 5, 7, 9, 11], name: 'Major' },
+        'Natural Minor': { intervals: [0, 2, 3, 5, 7, 8, 10], name: 'Natural Minor' },
+        'Harmonic Minor': { intervals: [0, 2, 3, 5, 7, 8, 11], name: 'Harmonic Minor' },
+        'Melodic Minor': { intervals: [0, 2, 3, 5, 7, 9, 11], name: 'Melodic Minor' },
+    };
+    const CHORD_TYPES = {
+        'basic': { name: 'Basic Diatonic Triad', intervals: [] },
+        'major': { name: 'Major Triad', intervals: [0, 4, 7] },
+        'minor': { name: 'Minor Triad', intervals: [0, 3, 7] },
+        'aug': { name: 'Augmented Triad', intervals: [0, 4, 8] },
+        'dim': { name: 'Diminished Triad', intervals: [0, 3, 6] },
+        'sus2': { name: 'Sus2', intervals: [0, 2, 7] },
+        'sus4': { name: 'Sus4', intervals: [0, 5, 7] },
+        'dom7': { name: 'Dominant 7th', intervals: [0, 4, 7, 10] },
+        'maj7': { name: 'Major 7th', intervals: [0, 4, 7, 11] },
+        'min7': { name: 'Minor 7th', intervals: [0, 3, 7, 10] },
+        'halfdim7': { name: 'Half-Diminished 7th', intervals: [0, 3, 6, 10] }
+    };
+    const INVERSIONS = {
+        'root': { name: 'Root Position', shift: [] },
+        'first': { name: '1st Inversion', shift: [0] },
+        'second': { name: '2nd Inversion', shift: [0, 1] },
+    };
+    
+    // --- Helper Functions ---
+    const getNoteName = (noteIndex) => NOTES[noteIndex % 12];
+    const speak = (text) => {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+    };
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const getScaleNotes = (rootIndex, scaleIntervals) => scaleIntervals.map(i => rootIndex + i);
+
+    const getDiatonicTriad = (scaleNotes, degree) => {
+        const root = scaleNotes[degree];
+        const third = scaleNotes[(degree + 2) % 7];
+        const fifth = scaleNotes[(degree + 4) % 7];
+        return [root, third, fifth];
+    };
+    
+    const getChordQuality = (chordNoteIndices) => {
+        const root = chordNoteIndices[0];
+        const thirdInterval = (chordNoteIndices[1] - root + 12) % 12;
+        const fifthInterval = (chordNoteIndices[2] - root + 12) % 12;
+        if (thirdInterval === 4 && fifthInterval === 8) return { quality: 'aug', name: 'Augmented', roman: '°' };
+        if (thirdInterval === 3 && fifthInterval === 6) return { quality: 'dim', name: 'Diminished', roman: '°' };
+        if (thirdInterval === 4 && fifthInterval === 7) return { quality: 'major', name: 'Major', roman: '' };
+        if (thirdInterval === 3 && fifthInterval === 7) return { quality: 'minor', name: 'Minor', roman: 'm' };
+        return { quality: 'other', name: 'Other', roman: '' };
+    };
+
+    const buildNoteNameArray = (noteIndices, baseOctave = 4) => {
+        let lastNoteValue = -1;
+        return noteIndices.map(noteIndex => {
+            let currentOctave = baseOctave;
+            if (noteIndex < lastNoteValue) {
+               currentOctave = baseOctave + 1;
+            } else if (noteIndex >= lastNoteValue + 12) {
+               currentOctave = baseOctave + Math.floor((noteIndex - lastNoteValue) / 12);
+            }
+            lastNoteValue = noteIndex;
+            return getNoteName(noteIndex) + currentOctave;
+        });
+    };
+
+    // --- Settings Persistence ---
+    const saveSettings = () => {
+        const settings = {
+            key: keySelect.value,
+            scale: scaleSelect.value,
+            delay: timeSlider.value,
+            chords: {}
+        };
+        chordsContainer.querySelectorAll('.main-chord-toggle').forEach(toggle => {
+            const degree = toggle.dataset.degree;
+            const container = toggle.closest('.border');
+            if (toggle.checked) {
+                const variations = [...container.querySelectorAll('.variation-checkbox:checked')].map(cb => cb.dataset.type);
+                const inversions = [...container.querySelectorAll('.inversion-checkbox:checked')].map(cb => cb.dataset.inversion);
+                settings.chords[degree] = { enabled: true, variations, inversions };
+            } else {
+                 settings.chords[degree] = { enabled: false };
+            }
+        });
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    };
+
+    const loadSettings = () => {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+        if (!saved) {
+            updateDiatonicChordUI(); // Build default UI if no settings
+            return;
+        }
+        const settings = JSON.parse(saved);
+
+        keySelect.value = settings.key || '0';
+        scaleSelect.value = settings.scale || 'Major';
+        timeSlider.value = settings.delay || '3';
+        timeDisplay.textContent = timeSlider.value;
+        answerDelay = parseInt(timeSlider.value) * 1000;
+
+        updateDiatonicChordUI(); // Rebuild UI based on saved key/scale
+
+        // Apply checkbox states
+        if (settings.chords) {
+            Object.keys(settings.chords).forEach(degree => {
+                const chordConfig = settings.chords[degree];
+                const mainToggle = chordsContainer.querySelector(`.main-chord-toggle[data-degree='${degree}']`);
+                if (mainToggle && chordConfig.enabled) {
+                    mainToggle.checked = true;
+                    const container = mainToggle.closest('.border');
+                    container.querySelector('.variation-container').classList.remove('hidden');
+                    
+                    chordConfig.variations.forEach(varType => {
+                        const cb = container.querySelector(`.variation-checkbox[data-type='${varType}']`);
+                        if (cb) cb.checked = true;
+                    });
+                    chordConfig.inversions.forEach(invType => {
+                        const cb = container.querySelector(`.inversion-checkbox[data-inversion='${invType}']`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+            });
+        }
+    };
+    
+    // --- UI Logic ---
+    const populateSelects = () => {
+        NOTES.forEach((note, i) => {
+            keySelect.innerHTML += `<option value="${i}">${note}</option>`;
+        });
+        Object.keys(SCALES).forEach(scaleKey => {
+            scaleSelect.innerHTML += `<option value="${scaleKey}">${SCALES[scaleKey].name}</option>`;
+        });
+    };
+
+    const updateDiatonicChordUI = () => {
+        const rootIndex = parseInt(keySelect.value);
+        const scale = SCALES[scaleSelect.value];
+        const scaleNotes = getScaleNotes(rootIndex, scale.intervals);
+        chordsContainer.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const chordNotes = getDiatonicTriad(scaleNotes, i);
+            const { quality, name, roman } = getChordQuality(chordNotes);
+            const rootNoteName = getNoteName(scaleNotes[i]);
+            
+            const romanNumeral = ROMAN[i] + roman;
+            const fullRoman = (quality === 'major' || quality === 'aug') ? romanNumeral.toUpperCase() : romanNumeral.toLowerCase();
+
+            const cardHtml = `
+                <div class="border dark:border-gray-700 rounded-md p-3">
+                    <label class="flex items-center space-x-2 cursor-pointer font-bold">
+                        <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 main-chord-toggle" data-degree="${i}">
+                        <span>${fullRoman} (${rootNoteName} ${name})</span>
+                    </label>
+                    <div class="pl-6 pt-2 space-y-1 variation-container hidden">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Chord Variations:</span>
+                        ${Object.keys(CHORD_TYPES).map(typeKey => `
+                            <label class="flex items-center space-x-2 cursor-pointer text-sm">
+                                <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 variation-checkbox" data-type="${typeKey}" ${typeKey === 'basic' ? 'checked disabled' : ''}>
+                                <span>${CHORD_TYPES[typeKey].name}</span>
+                            </label>`).join('')
+                        }
+                        <span class="text-xs text-gray-500 dark:text-gray-400 pt-2 block">Inversions:</span>
+                        ${Object.keys(INVERSIONS).map(invKey => `
+                            <label class="flex items-center space-x-2 cursor-pointer text-sm">
+                                <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 inversion-checkbox" data-inversion="${invKey}" ${invKey === 'root' ? 'checked' : ''}>
+                                <span>${INVERSIONS[invKey].name}</span>
+                            </label>`).join('')
+                        }
+                    </div>
+                </div>
+            `;
+            chordsContainer.innerHTML += cardHtml;
+        }
+        
+        chordsContainer.querySelectorAll('.main-chord-toggle').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const container = e.target.closest('.border').querySelector('.variation-container');
+                container.classList.toggle('hidden', !e.target.checked);
+            });
+        });
+    };
+    
+    // --- Quiz Logic ---
+    const generateQuizPool = () => {
+        quizPool = [];
+        const mainToggles = chordsContainer.querySelectorAll('.main-chord-toggle:checked');
+        
+        mainToggles.forEach(toggle => {
+            const degree = parseInt(toggle.dataset.degree);
+            const container = toggle.closest('.border');
+            const variationCheckboxes = container.querySelectorAll('.variation-checkbox:checked');
+            const inversionCheckboxes = container.querySelectorAll('.inversion-checkbox:checked');
+            
+            const rootIndex = parseInt(keySelect.value);
+            const scale = SCALES[scaleSelect.value];
+            const scaleNotes = getScaleNotes(rootIndex, scale.intervals);
+            const rootNote = scaleNotes[degree];
+            const rootNoteName = getNoteName(rootNote);
+            const { quality, name, roman } = getChordQuality(getDiatonicTriad(scaleNotes, degree));
+            const romanNumeral = ROMAN[degree] + roman;
+            const fullRoman = (quality === 'major' || quality === 'aug') ? romanNumeral.toUpperCase() : romanNumeral.toLowerCase();
+
+
+            variationCheckboxes.forEach(varBox => {
+                const typeKey = varBox.dataset.type;
+                let chordIntervals;
+                let qualityName;
+
+                if (typeKey === 'basic') {
+                    const diatonicNotes = getDiatonicTriad(scaleNotes, degree);
+                    chordIntervals = diatonicNotes.map(n => (n - rootNote + 12) % 12);
+                    qualityName = getChordQuality(diatonicNotes).name;
+                } else {
+                    chordIntervals = CHORD_TYPES[typeKey].intervals;
+                    qualityName = CHORD_TYPES[typeKey].name;
+                }
+
+                inversionCheckboxes.forEach(invBox => {
+                    const invKey = invBox.dataset.inversion;
+                    let tempChord = [...chordIntervals];
+                    
+                    for(let i=0; i < INVERSIONS[invKey].shift.length; i++) {
+                        if(tempChord.length > 0) { tempChord.push(tempChord.shift() + 12); }
+                    }
+
+                    const finalNoteIndices = tempChord.map(i => rootNote + i);
+                    const noteNames = buildNoteNameArray(finalNoteIndices, 4);
+
+                    const displayLabel = `${rootNoteName} ${qualityName}` + (invKey !== 'root' ? `, ${INVERSIONS[invKey].name}` : '') + ` (${fullRoman})`;
+                    const diatonicName = `${ORDINAL_NAMES[degree]} ${qualityName}`;
+                    const speechLabel = `${diatonicName}` + (invKey !== 'root' ? `, ${INVERSIONS[invKey].name}` : '');
+
+                    quizPool.push({
+                        notes: noteNames,
+                        label: displayLabel,
+                        speechLabel: speechLabel,
+                    });
+                });
+            });
+        });
+    };
+
+    const startTraining = async () => {
+        generateQuizPool();
+        if (quizPool.length === 0) {
+            startButton.classList.remove('bg-indigo-600');
+            startButton.classList.add('bg-red-500');
+            startButton.textContent = 'Please select at least one chord!';
+            setTimeout(() => {
+                startButton.classList.remove('bg-red-500');
+                startButton.classList.add('bg-indigo-600');
+                startButton.textContent = 'Start Training';
+            }, 2500);
+            return;
+        }
+
+        if (!synth) {
+            await Tone.start();
+            synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'fmsine' },
+                envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1 },
+            }).toDestination();
+            synth.volume.value = -9;
+        }
+
+        quizActive = true;
+        configView.classList.add('hidden');
+        quizView.classList.remove('hidden');
+        
+        const keyName = keySelect.options[keySelect.selectedIndex].text;
+        const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text;
+        chordDisplay.textContent = `Calibrating: ${keyName} ${scaleName}`;
+        speak(`Key of ${keyName} ${scaleName}`);
+        
+        const rootIndex = parseInt(keySelect.value);
+        const scaleInfo = SCALES[scaleSelect.value];
+        const scaleNotesIndices = getScaleNotes(rootIndex, scaleInfo.intervals);
+        const tonicArpeggio = [
+            buildNoteNameArray([scaleNotesIndices[0]], 4)[0],
+            buildNoteNameArray([scaleNotesIndices[2]], 4)[0],
+            buildNoteNameArray([scaleNotesIndices[4]], 4)[0],
+            buildNoteNameArray([scaleNotesIndices[0] + 12], 5)[0]
+        ];
+        const tonicChord = buildNoteNameArray(getDiatonicTriad(scaleNotesIndices, 0), 4);
+
+        await sleep(1500);
+        if (!quizActive) return;
+
+        const now = Tone.now();
+        tonicArpeggio.forEach((note, i) => {
+            synth.triggerAttackRelease(note, "8n", now + i * 0.3);
+        });
+        synth.triggerAttackRelease(tonicChord, "1n", now + tonicArpeggio.length * 0.3);
+        
+        await sleep((tonicArpeggio.length * 300) + 1000);
+        if (!quizActive) return;
+        runQuizCycle();
+    };
+    
+    const stopQuiz = () => {
+        quizActive = false;
+        window.speechSynthesis.cancel();
+        quizView.classList.add('hidden');
+        configView.classList.remove('hidden');
+        chordDisplay.textContent = '...';
+    };
+
+    const runQuizCycle = async () => {
+        if (!quizActive) return;
+
+        const chordInfo = quizPool[Math.floor(Math.random() * quizPool.length)];
+        
+        chordDisplay.textContent = 'Listen...';
+        synth.triggerAttackRelease(chordInfo.notes, '2n');
+
+        await sleep(answerDelay);
+        if (!quizActive) return;
+
+        chordDisplay.textContent = chordInfo.label;
+        speak(chordInfo.speechLabel);
+
+        await sleep(2500);
+        if (!quizActive) return;
+
+        runQuizCycle();
+    };
+
+    // --- Initial Setup & Event Listeners ---
+    function initializeApp() {
+        populateSelects();
+        loadSettings(); // This function now handles the initial UI build
+        
+        // Add event listeners that trigger saveSettings
+        keySelect.addEventListener('change', () => { updateDiatonicChordUI(); saveSettings(); });
+        scaleSelect.addEventListener('change', () => { updateDiatonicChordUI(); saveSettings(); });
+        timeSlider.addEventListener('input', (e) => {
+            answerDelay = parseInt(e.target.value) * 1000;
+            timeDisplay.textContent = e.target.value;
+            saveSettings();
+        });
+        // Use event delegation for dynamic checkboxes
+        chordsContainer.addEventListener('change', saveSettings);
+
+        startButton.addEventListener('click', startTraining);
+        stopButton.addEventListener('click', stopQuiz);
+    }
+    
+    initializeApp();
+});
+</script>
+</body>
+</html>
